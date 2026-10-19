@@ -1,0 +1,46 @@
+
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check project files
+        run: |
+          ls -la
+          find . -maxdepth 3 -type f | head -100
+
+      - name: Build APK
+        run: |
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug
+          elif [ -f ./gradle/wrapper/gradle-wrapper.properties ]; then
+            gradle assembleDebug
+          else
+            echo "Android Gradle project is incomplete. Upload the complete project first."
+            exit 1
+          fi
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BajanaSongs-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
